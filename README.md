@@ -330,6 +330,3 @@ docker exec -it kafka kafka-console-consumer \
    - Database: `energy_dwh`
    - Username: `energy_user`
    - Password: `energy_password`
-
-
-**⭐ If you find this project useful, please consider giving it a star!**
