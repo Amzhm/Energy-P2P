@@ -1,0 +1,45 @@
+# HDFS Configuration
+# This ConfigMap provides core-site.xml and hdfs-site.xml for the Apache Hadoop image
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hdfs-config
+  namespace: energy-p2p
+  labels:
+    app: hdfs
+    component: storage
+data:
+  core-site.xml: |
+    <?xml version="1.0"?>
+    <configuration>
+      <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hdfs-namenode-service:9000</value>
+      </property>
+    </configuration>
+  
+  hdfs-site.xml: |
+    <?xml version="1.0"?>
+    <configuration>
+      <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file:///hadoop/dfs/name</value>
+      </property>
+      <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file:///hadoop/dfs/data</value>
+      </property>
+      <property>
+        <name>dfs.replication</name>
+        <value>1</value>
+      </property>
+      <property>
+        <name>dfs.webhdfs.enabled</name>
+        <value>true</value>
+      </property>
+      <property>
+        <name>dfs.permissions.enabled</name>
+        <value>false</value>
+      </property>
+    </configuration>

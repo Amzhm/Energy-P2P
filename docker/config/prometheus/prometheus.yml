@@ -1,0 +1,64 @@
+# Prometheus Configuration for Energy P2P Platform
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    cluster: 'energy-p2p-cluster'
+    environment: 'development'
+
+# Alertmanager configuration (optional - add  if needed)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Kafka Exporter (if you add it )
+  # - job_name: 'kafka'
+  #   static_configs:
+  #     - targets: ['kafka-exporter:9308']
+  #       labels:
+  #         service: 'kafka'
+
+  # PostgreSQL Exporter (if you add it)
+  # - job_name: 'postgresql'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'postgresql'
+
+  # MongoDB Exporter (if you add it)
+  # - job_name: 'mongodb'
+  #   static_configs:
+  #     - targets: ['mongodb-exporter:9216']
+  #       labels:
+  #         service: 'mongodb'
+
+  # Node Exporter for system metrics (if you add it)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #       labels:
+  #         service: 'node'
+
+  # Airflow Exporter (if available)
+  # - job_name: 'airflow'
+  #   static_configs:
+  #     - targets: ['airflow-exporter:9112']
+  #       labels:
+  #         service: 'airflow'

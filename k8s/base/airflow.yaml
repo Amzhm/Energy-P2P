@@ -1,0 +1,189 @@
+---
+# Airflow Init Job (runs once to set up DB and admin user)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-init
+  namespace: energy-p2p
+  labels:
+    app: airflow-init
+    component: orchestration
+spec:
+  template:
+    metadata:
+      labels:
+        app: airflow-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: airflow-init
+        image: apache/airflow:2.7.3-python3.11
+        command:
+        - /bin/bash
+        - -c
+        - |
+          airflow db init
+          airflow users create \
+            --username admin \
+            --password admin \
+            --firstname Admin \
+            --lastname User \
+            --role Admin \
+            --email energy@p2p.com || true
+        env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "LocalExecutor"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: "postgresql+psycopg2://energy_user:energy_pass@postgresql-service:5432/airflow_db"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: energy-platform-secrets
+              key: AIRFLOW_FERNET_KEY
+        - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+          value: "true"
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: "false"
+        volumeMounts:
+        - name: airflow-dags
+          mountPath: /opt/airflow/dags
+      volumes:
+      - name: airflow-dags
+        persistentVolumeClaim:
+          claimName: airflow-dags-pvc
+
+---
+# Airflow Webserver Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  namespace: energy-p2p
+  labels:
+    app: airflow-webserver
+    component: orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-webserver
+  template:
+    metadata:
+      labels:
+        app: airflow-webserver
+        component: orchestration
+    spec:
+      containers:
+      - name: webserver
+        image: apache/airflow:2.7.3-python3.11
+        command: ["airflow", "webserver"]
+        ports:
+        - containerPort: 8080
+          name: web
+        env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "LocalExecutor"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: "postgresql+psycopg2://energy_user:energy_pass@postgresql-service:5432/airflow_db"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: energy-platform-secrets
+              key: AIRFLOW_FERNET_KEY
+        - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+          value: "true"
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: "false"
+        - name: AIRFLOW__API__AUTH_BACKENDS
+          value: "airflow.api.auth.backend.basic_auth"
+        volumeMounts:
+        - name: airflow-dags
+          mountPath: /opt/airflow/dags
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 30
+      volumes:
+      - name: airflow-dags
+        persistentVolumeClaim:
+          claimName: airflow-dags-pvc
+
+---
+# Airflow Webserver Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver-service
+  namespace: energy-p2p
+  labels:
+    app: airflow-webserver
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: web
+  selector:
+    app: airflow-webserver
+
+---
+# Airflow Scheduler Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: energy-p2p
+  labels:
+    app: airflow-scheduler
+    component: orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+        component: orchestration
+    spec:
+      containers:
+      - name: scheduler
+        image: apache/airflow:2.7.3-python3.11
+        command: ["airflow", "scheduler"]
+        env:
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "LocalExecutor"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: "postgresql+psycopg2://energy_user:energy_pass@postgresql-service:5432/airflow_db"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: energy-platform-secrets
+              key: AIRFLOW_FERNET_KEY
+        - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+          value: "true"
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: "false"
+        volumeMounts:
+        - name: airflow-dags
+          mountPath: /opt/airflow/dags
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: airflow-dags
+        persistentVolumeClaim:
+          claimName: airflow-dags-pvc

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: energy-platform-config
+  namespace: energy-p2p
+data:
+  # Database configurations
+  POSTGRES_DB: "energy_dwh"
+  POSTGRES_HOST: "postgresql-service"
+  POSTGRES_PORT: "5432"
+  
+  MONGO_DB: "energy_db"
+  MONGO_HOST: "mongodb-service"
+  MONGO_PORT: "27017"
+  
+  CASSANDRA_HOST: "cassandra-service"
+  CASSANDRA_PORT: "9042"
+  CASSANDRA_KEYSPACE: "energy_timeseries"
+  
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Big Data services
+  HDFS_NAMENODE_HOST: "hdfs-namenode-service"
+  HDFS_NAMENODE_UI_HOST: "hdfs-namenode-ui-service"
+  HDFS_NAMENODE_PORT: "9000"
+  HDFS_NAMENODE_WEB_PORT: "9870"
+  
+  SPARK_MASTER_HOST: "spark-master-service"
+  SPARK_MASTER_UI_HOST: "spark-master-ui-service"
+  SPARK_MASTER_PORT: "7077"
+  SPARK_MASTER_WEB_PORT: "8080"
+  
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  ZOOKEEPER_HOST: "zookeeper-service"
+  ZOOKEEPER_PORT: "2181"
+  
+  # Airflow
+  AIRFLOW_EXECUTOR: "LocalExecutor"
+  AIRFLOW_HOME: "/opt/airflow"
+  
+  # Project settings
+  PROJECT_NAME: "energy-p2p-platform"
+  ENVIRONMENT: "development"
+  
+  # Data paths
+  HDFS_BRONZE_PATH: "/bronze"
+  HDFS_SILVER_PATH: "/silver"
+  HDFS_GOLD_PATH: "/gold"
+  
+  # Kafka topics
+  KAFKA_TOPIC_ENERGY_METERS: "energy-meters"
+  KAFKA_TOPIC_SPOT_PRICES: "spot-prices"
+  KAFKA_TOPIC_WEATHER_ALERTS: "weather-alerts"
+  KAFKA_TOPIC_DASHBOARD_UPDATES: "dashboard-updates"
+  KAFKA_TOPIC_ANOMALIES: "anomalies"
+

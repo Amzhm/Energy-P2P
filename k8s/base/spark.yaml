@@ -1,0 +1,137 @@
+# Spark Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: energy-p2p
+  labels:
+    app: spark-master
+    component: processing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+        component: processing
+    spec:
+      containers:
+      - name: spark-master
+        image: apache/spark:3.5.1
+        imagePullPolicy: IfNotPresent
+        command: ["/opt/spark/bin/spark-class"]
+        args: ["org.apache.spark.deploy.master.Master"]
+        ports:
+        - containerPort: 8080
+          name: web
+        - containerPort: 7077
+          name: spark
+        env:
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+# Spark Master Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master-service
+  namespace: energy-p2p
+  labels:
+    app: spark-master
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7077
+    targetPort: 7077
+    name: spark
+  selector:
+    app: spark-master
+---
+# Spark Master UI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master-ui-service
+  namespace: energy-p2p
+  labels:
+    app: spark-master
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: web
+  selector:
+    app: spark-master
+---
+# Spark Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: energy-p2p
+  labels:
+    app: spark-worker
+    component: processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+        component: processing
+    spec:
+      containers:
+      - name: spark-worker
+        image: apache/spark:3.5.1
+        imagePullPolicy: IfNotPresent
+        command: ["/opt/spark/bin/spark-class"]
+        args: ["org.apache.spark.deploy.worker.Worker", "spark://spark-master-service:7077"]
+        ports:
+        - containerPort: 8081
+          name: web
+        env:
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        - name: SPARK_WORKER_MEMORY
+          value: "1g"
+        - name: SPARK_WORKER_CORES
+          value: "1"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+---
+# Spark Worker Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker-service
+  namespace: energy-p2p
+  labels:
+    app: spark-worker
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 8081
+    targetPort: 8081
+    name: web
+  selector:
+    app: spark-worker

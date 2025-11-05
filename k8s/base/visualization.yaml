@@ -1,0 +1,131 @@
+---
+# Apache Superset Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: superset
+  namespace: energy-p2p
+  labels:
+    app: superset
+    component: visualization
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: superset
+  template:
+    metadata:
+      labels:
+        app: superset
+        component: visualization
+    spec:
+      containers:
+      - name: superset
+        image: apache/superset:latest
+        ports:
+        - containerPort: 8088
+          name: web
+        env:
+        - name: SUPERSET_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: energy-platform-secrets
+              key: SUPERSET_SECRET_KEY
+        - name: SUPERSET_LOAD_EXAMPLES
+          value: "no"
+        command:
+        - /bin/sh
+        - -c
+        - |
+          superset db upgrade &&
+          superset fab create-admin \
+            --username admin \
+            --firstname Admin \
+            --lastname User \
+            --email admin@superset.com \
+            --password admin || true &&
+          superset init &&
+          superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+---
+# Superset Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: superset-service
+  namespace: energy-p2p
+  labels:
+    app: superset
+spec:
+  ports:
+  - port: 8088
+    targetPort: 8088
+    name: web
+  selector:
+    app: superset
+
+---
+# Jupyter Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+  namespace: energy-p2p
+  labels:
+    app: jupyter
+    component: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+        component: development
+    spec:
+      containers:
+      - name: jupyter
+        image: jupyter/pyspark-notebook:latest
+        ports:
+        - containerPort: 8888
+          name: web
+        env:
+        - name: JUPYTER_ENABLE_LAB
+          value: "yes"
+        - name: GRANT_SUDO
+          value: "yes"
+        - name: JUPYTER_TOKEN
+          value: "energy-p2p-token"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+
+---
+# Jupyter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-service
+  namespace: energy-p2p
+  labels:
+    app: jupyter
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+    name: web
+  selector:
+    app: jupyter

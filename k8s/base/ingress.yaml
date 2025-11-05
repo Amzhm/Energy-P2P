@@ -1,0 +1,113 @@
+# Ingress Controller for Energy P2P Platform
+# Provides domain-based routing to services
+# Install NGINX Ingress first: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+
+---
+# Ingress for Web UIs
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: energy-p2p-ingress
+  namespace: energy-p2p
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  
+  # Airflow
+  - host: airflow.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: airflow-webserver-service
+            port:
+              number: 8080
+  
+  # Spark Master UI
+  - host: spark.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: spark-master-ui-service
+            port:
+              number: 8080
+  
+  # HDFS Namenode UI
+  - host: hdfs.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hdfs-namenode-ui-service
+            port:
+              number: 9870
+  
+  # Kafka UI
+  - host: kafka.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kafka-ui-service
+            port:
+              number: 8080
+  
+  # Grafana
+  - host: grafana.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+  
+  # Prometheus
+  - host: prometheus.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+  
+  # Superset
+  - host: superset.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: superset-service
+            port:
+              number: 8088
+  
+  # Jupyter
+  - host: jupyter.energy-p2p.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jupyter-service
+            port:
+              number: 8888

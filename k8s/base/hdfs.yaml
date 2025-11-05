@@ -1,0 +1,151 @@
+---
+# HDFS Namenode Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hdfs-namenode
+  namespace: energy-p2p
+  labels:
+    app: hdfs-namenode
+    component: storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: hdfs-namenode
+  template:
+    metadata:
+      labels:
+        app: hdfs-namenode
+        component: storage
+    spec:
+      containers:
+      - name: namenode
+        image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+        ports:
+        - containerPort: 9870
+          name: web 
+        - containerPort: 9000
+          name: hdfs
+        env:
+        - name: CLUSTER_NAME
+          value: "energy-p2p-cluster"
+        - name: CORE_CONF_fs_defaultFS
+          value: "hdfs://hdfs-namenode-service:9000"
+        - name: HDFS_CONF_dfs_webhdfs_enabled
+          value: "true"
+        - name: HDFS_CONF_dfs_permissions_enabled
+          value: "false"
+        volumeMounts:
+        - name: namenode-data
+          mountPath: /hadoop/dfs/name
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: namenode-data
+        persistentVolumeClaim:
+          claimName: hdfs-namenode-pvc
+
+---
+# HDFS Namenode UI Service (for Web UI - port 9870)
+apiVersion: v1
+kind: Service
+metadata:
+  name: hdfs-namenode-ui-service
+  namespace: energy-p2p
+  labels:
+    app: hdfs-namenode  # FIXED: Changed from hdfs-namenode-ui to hdfs-namenode
+spec:
+  type: ClusterIP 
+  ports:
+  - name: web
+    port: 9870
+    targetPort: 9870
+  selector:
+    app: hdfs-namenode  # MATCHES the pod label
+
+---
+# HDFS Namenode Service (for HDFS protocol - port 9000)
+apiVersion: v1
+kind: Service
+metadata:
+  name: hdfs-namenode-service
+  namespace: energy-p2p
+  labels:
+    app: hdfs-namenode
+spec:
+  type: ClusterIP 
+  ports:
+  - name: hdfs
+    port: 9000
+    targetPort: 9000
+  selector:
+    app: hdfs-namenode  # MATCHES the pod label
+
+---
+# HDFS Datanode Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hdfs-datanode
+  namespace: energy-p2p
+  labels:
+    app: hdfs-datanode
+    component: storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: hdfs-datanode
+  template:
+    metadata:
+      labels:
+        app: hdfs-datanode
+        component: storage
+    spec:
+      containers:
+      - name: datanode
+        image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+        ports:
+        - containerPort: 9864
+          name: web 
+        env:
+        - name: CORE_CONF_fs_defaultFS
+          value: "hdfs://hdfs-namenode-service:9000"
+        volumeMounts:
+        - name: datanode-data
+          mountPath: /hadoop/dfs/data  # FIXED: Changed from /name to /data
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: datanode-data
+        persistentVolumeClaim:
+          claimName: hdfs-datanode-pvc
+
+---
+# HDFS Datanode Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: hdfs-datanode-service
+  namespace: energy-p2p
+  labels:
+    app: hdfs-datanode
+spec:
+  type: ClusterIP  # Added type for consistency
+  ports:
+  - port: 9864
+    targetPort: 9864
+    name: web
+  selector:
+    app: hdfs-datanode
