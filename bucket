@@ -1,4 +1,0 @@
-kubectl run -i --tty dns-test -n energy-p2p \
-  --image=busybox:1.28 --restart=Never -- sh
-
-  kubectl exec -it -n energy-p2p hdfs-namenode-d5665db49-vgtc7 -- /bin/bash
