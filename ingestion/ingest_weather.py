@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s: %(m
 logger = logging.getLogger(__name__)
 
 # Paths
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data" / "bronze" / "temp"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
