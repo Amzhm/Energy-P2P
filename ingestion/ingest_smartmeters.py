@@ -22,13 +22,13 @@ class SmartMetersRawIngestion:
         csv_files = list(self.halfhourly_dir.glob("*.csv"))
         
         if len(csv_files) == 0:
-            logger.error(f" Aucun fichier CSV trouvé")
+            logger.error(f" No CSV file")
             return False
         
-        logger.info(f" Trouvé {len(csv_files)} fichiers CSV")
+        logger.info(f" Find {len(csv_files)} CSV files")
         
         total_size_mb = sum(f.stat().st_size for f in csv_files) / (1024 * 1024)
-        logger.info(f" Taille totale: {total_size_mb:.2f} MB")
+        logger.info(f" Size: {total_size_mb:.2f} MB")
         
         return True, csv_files
     
@@ -63,13 +63,11 @@ class SmartMetersRawIngestion:
             return True
             
         except subprocess.CalledProcessError as e:
-            logger.warning(f"  Erreur upload {filename}: {e}")
+            logger.warning(f"  Error upload {filename}: {e}")
             return False
     
-    def upload_all_files(self, csv_files):
-        """Upload tous les fichiers CSV vers HDFS"""
-        
-        logger.info(f"  Upload de {len(csv_files)} fichiers vers HDFS...")
+    def upload_all_files(self, csv_files):        
+        logger.info(f"  Upload of {len(csv_files)} files to HDFS...")
         
         success_count = 0
         failed_count = 0
@@ -93,19 +91,12 @@ class SmartMetersRawIngestion:
         cmd_size = f"docker exec namenode hdfs dfs -du -s -h {self.hdfs_path}"
         result = subprocess.run(cmd_size, shell=True, capture_output=True, text=True)
         
-        logger.info(f"\ Statistiques HDFS:")
-        logger.info(f"  Fichiers CSV: {file_count}")
+        logger.info(f"\ Statistics HDFS:")
+        logger.info(f" CSV files: {file_count}")
         logger.info(f"  {result.stdout.strip()}")
     
-    def verify_sample(self):
-        """Affiche un échantillon des fichiers uploadés"""
-        logger.info("\ Échantillon des fichiers dans HDFS:")
-        
-        cmd = f"docker exec namenode hdfs dfs -ls {self.hdfs_path} | head -10"
-        subprocess.run(cmd, shell=True)
-    
     def run(self):
-        logger.info(" INGESTION RAW SMART METERS - AUCUN TRAITEMENT")
+        logger.info(" INGESTION RAW SMART METERS")
         
         result = self.validate_directory()
         if not result:
@@ -115,12 +106,8 @@ class SmartMetersRawIngestion:
         
         self.upload_all_files(csv_files)
         
-        self.get_hdfs_stats()
-        
-        self.verify_sample()
-        
-        logger.info("\ Ingestion RAW terminée!")
-        logger.info(f"  Fichiers disponibles dans: {self.hdfs_path}")
+        self.get_hdfs_stats()        
+        logger.info("\ Ingestion RAW OK!")
         return True
 
 
