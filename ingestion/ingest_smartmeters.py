@@ -12,7 +12,7 @@ class SmartMetersRawIngestion:
     
     def __init__(self, halfhourly_dir):
         self.halfhourly_dir = Path(halfhourly_dir)
-        self.hdfs_path = "/data-lake/bronze/smart-meters/raw"
+        self.hdfs_path = "/data-lake/bronze/smart-meters"
         
     def validate_directory(self):
         if not self.halfhourly_dir.exists():

@@ -111,7 +111,7 @@ class WeatherIngestion:
         filename = f"weather_{yesterday}.json"
         local_path = self.save_locally(data, filename)
         
-        hdfs_path = "/data-lake/bronze/weather/raw"
+        hdfs_path = "/data-lake/bronze/weather"
         self.upload_to_hdfs(local_path, hdfs_path)
         
         self.verify_hdfs(hdfs_path)

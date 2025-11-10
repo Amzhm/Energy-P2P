@@ -138,7 +138,7 @@ class PricesIngestion:
         local_path = self.save_locally(data, filename)
         
         # 4. Upload HDFS
-        hdfs_path = "/data-lake/bronze/prices/raw"
+        hdfs_path = "/data-lake/bronze/prices"
         self.upload_to_hdfs(local_path, hdfs_path)
         
         logger.info("\nIngestion OK!")
